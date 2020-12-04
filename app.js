@@ -39,73 +39,80 @@ const question = () =>
     },
   ]);
 
-function createManager(name, id, email) {
-  inquirer
-    .prompt([
-      {
-        type: "input",
-        message: "What is your office number?",
-        name: "officeNumber",
-      },
-    ])
-    .then((response) => {
-      return new Manager(name, id, email, response.officeNumber);
-    });
-}
-
-function createEngineer(name, id, email) {
-  inquirer
-    .prompt([
-      {
-        type: "input",
-        message: "What is your Github username?",
-        name: "github",
-      },
-    ])
-    .then((response) => {
-      return new Engineer(name, id, email, response.github);
-    });
-}
-
-function createIntern(name, id, email) {
-  inquirer
-    .prompt([
-      {
-        type: "input",
-        message: "Where do you attend University?",
-        name: "university",
-      },
-    ])
-    .then((response) => {
-      return new Intern(name, id, email, response.university);
-    });
-}
-
 function main() {
-  question().then((response) => {
+  question().then(async (response) => {
     switch (response.role) {
       case "Manager":
-        employees.push(
-          createManager(response.name, response.id, response.email)
+        const employeeMgr = await createManager(
+          response.name,
+          response.id,
+          response.email
         );
+        employees.push(employeeMgr);
+
         addAnotherEmployee();
         break;
 
       case "Engineer":
-        employees.push(
-          createEngineer(response.name, response.id, response.email)
+        const employeeEng = await createEngineer(
+          response.name,
+          response.id,
+          response.email
         );
+        employees.push(employeeEng);
         addAnotherEmployee();
         break;
 
       case "Intern":
-        employees.push(createIntern(reponse.name, response.id, response.email));
+        const employeeInt = await createIntern(
+          response.name,
+          response.id,
+          response.email
+        );
+        employees.push(employeeInt);
+
         addAnotherEmployee();
         break;
       default:
         break;
     }
   });
+}
+
+async function createManager(name, id, email) {
+  const response = await inquirer.prompt([
+    {
+      type: "input",
+      message: "What is your office number?",
+      name: "officeNumber",
+    },
+  ]);
+
+  return new Manager(name, id, email, response.officeNumber);
+}
+
+async function createEngineer(name, id, email) {
+  const response = await inquirer.prompt([
+    {
+      type: "input",
+      message: "What is your Github username?",
+      name: "github",
+    },
+  ]);
+
+  return new Engineer(name, id, email, response.github);
+}
+
+async function createIntern(name, id, email) {
+  const response = await inquirer.prompt([
+    {
+      type: "input",
+      message: "Where do you attend University?",
+      name: "university",
+    },
+  ]);
+
+  return new Intern(name, id, email, response.university);
 }
 
 function addAnotherEmployee() {
@@ -121,11 +128,19 @@ function addAnotherEmployee() {
       if (response.addEmployee) {
         main();
       } else {
-        render(employees);
+        const data = render(employees);
         //fs function
+        if (!fs.existsSync(OUTPUT_DIR)) {
+          fs.mkdirSync(OUTPUT_DIR);
+        }
+        fs.writeFile(outputPath, data, (err) => {
+          return err ? console.log(err) : console.log("Success!");
+        });
       }
     });
 }
+
+main();
 
 // After the user has input all employees desired, call the `render` function (required
 // above) and pass in an array containing all employee objects; the `render` function will
